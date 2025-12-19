@@ -1,0 +1,242 @@
+import {
+    ShoppingCartEvent,
+    ShoppingCartEvents,
+    ShoppingStarted,
+    ItemAddedToCart,
+    ItemRemovedFromCart,
+    ItemQuantityIncreased,
+    ItemQuantityDecreased,
+    ShoppingCartCleared,
+} from './ShoppingCartEvents';
+import {ShoppingCartCommand} from './ShoppingCartCommands';
+
+export interface CartItem {
+    productId: string;
+    quantity: number;
+    unitPrice: {
+        amount: number;
+        currency: string;
+    };
+}
+
+export interface ShoppingCartState {
+    status: 'Open' | 'Active' | 'Empty';
+    cartId?: string;
+    customerId?: string;
+    items: Map<string, CartItem>;
+}
+
+export const initialState: ShoppingCartState = {
+    status: 'Open',
+    items: new Map(),
+};
+
+export function evolve(
+    state: ShoppingCartState,
+    event: ShoppingCartEvent
+): ShoppingCartState {
+    switch (event.type) {
+        case 'ShoppingStarted': {
+            const evt = event as ShoppingStarted;
+            return {
+                status: evt.status,
+                cartId: evt.data.cartId,
+                customerId: evt.data.customerId,
+                items: new Map(),
+            };
+        }
+
+        case 'ItemAddedToCart': {
+            const evt = event as ItemAddedToCart;
+            const newItems = new Map(state.items);
+            const existingItem = newItems.get(evt.data.productId);
+
+            if (existingItem) {
+                newItems.set(evt.data.productId, {
+                    ...existingItem,
+                    quantity: existingItem.quantity + evt.data.quantity,
+                });
+            } else {
+                newItems.set(evt.data.productId, {
+                    productId: evt.data.productId,
+                    quantity: evt.data.quantity,
+                    unitPrice: evt.data.unitPrice,
+                });
+            }
+
+            return {
+                ...state,
+                items: newItems,
+            };
+        }
+
+        case 'ItemRemovedFromCart': {
+            const evt = event as ItemRemovedFromCart;
+            const newItems = new Map(state.items);
+            newItems.delete(evt.data.productId);
+
+            return {
+                ...state,
+                items: newItems,
+            };
+        }
+
+        case 'ItemQuantityIncreased': {
+            const evt = event as ItemQuantityIncreased;
+            const newItems = new Map(state.items);
+            const existingItem = newItems.get(evt.data.productId);
+
+            if (existingItem) {
+                newItems.set(evt.data.productId, {
+                    ...existingItem,
+                    quantity: existingItem.quantity + evt.data.quantity,
+                });
+            }
+
+            return {
+                ...state,
+                items: newItems,
+            };
+        }
+
+        case 'ItemQuantityDecreased': {
+            const evt = event as ItemQuantityDecreased;
+            const newItems = new Map(state.items);
+            const existingItem = newItems.get(evt.data.productId);
+
+            if (existingItem) {
+                const newQuantity = existingItem.quantity - evt.data.quantity;
+                if (newQuantity <= 0) {
+                    newItems.delete(evt.data.productId);
+                } else {
+                    newItems.set(evt.data.productId, {
+                        ...existingItem,
+                        quantity: newQuantity,
+                    });
+                }
+            }
+
+            return {
+                ...state,
+                items: newItems,
+            };
+        }
+
+        case 'ShoppingCartCleared': {
+            const evt = event as ShoppingCartCleared;
+            return {
+                ...state,
+                status: evt.status,
+                items: new Map(),
+            };
+        }
+
+        default:
+            return state;
+    }
+}
+
+export function decide(
+    command: ShoppingCartCommand,
+    state: ShoppingCartState
+): ShoppingCartEvent[] {
+    switch (command.type) {
+        case 'StartShopping': {
+            if (state.status !== 'Open') {
+                throw new Error('Shopping cart already started');
+            }
+            return [
+                ShoppingCartEvents.ShoppingStarted(
+                    command.data.cartId,
+                    command.data.customerId,
+                    new Date()
+                ),
+            ];
+        }
+
+        case 'AddItemToCart': {
+            if (state.status !== 'Open') {
+                throw new Error('Shopping cart is not open');
+            }
+            return [
+                ShoppingCartEvents.ItemAddedToCart(
+                    command.data.cartId,
+                    command.data.productId,
+                    command.data.quantity,
+                    command.data.unitPrice,
+                    new Date()
+                ),
+            ];
+        }
+
+        case 'RemoveItemFromCart': {
+            if (state.status !== 'Open') {
+                throw new Error('Shopping cart is not open');
+            }
+            if (!state.items.has(command.data.productId.getValue())) {
+                throw new Error('Item not found in cart');
+            }
+            return [
+                ShoppingCartEvents.ItemRemovedFromCart(
+                    command.data.cartId,
+                    command.data.productId,
+                    new Date()
+                ),
+            ];
+        }
+
+        case 'IncreaseItemQuantity': {
+            if (state.status !== 'Open') {
+                throw new Error('Shopping cart is not open');
+            }
+            if (!state.items.has(command.data.productId.getValue())) {
+                throw new Error('Item not found in cart');
+            }
+            return [
+                ShoppingCartEvents.ItemQuantityIncreased(
+                    command.data.cartId,
+                    command.data.productId,
+                    command.data.quantity,
+                    new Date()
+                ),
+            ];
+        }
+
+        case 'DecreaseItemQuantity': {
+            if (state.status !== 'Open') {
+                throw new Error('Shopping cart is not open');
+            }
+            const item = state.items.get(command.data.productId.getValue());
+            if (!item) {
+                throw new Error('Item not found in cart');
+            }
+            if (item.quantity < command.data.quantity.getValue()) {
+                throw new Error('Cannot decrease quantity below zero');
+            }
+            return [
+                ShoppingCartEvents.ItemQuantityDecreased(
+                    command.data.cartId,
+                    command.data.productId,
+                    command.data.quantity,
+                    new Date()
+                ),
+            ];
+        }
+
+        case 'ClearShoppingCart': {
+            if (state.status !== 'Open') {
+                throw new Error('Shopping cart is not active');
+            }
+            return [ShoppingCartEvents.ShoppingCartCleared(command.data.cartId, new Date())];
+        }
+
+        default:
+            return [];
+    }
+}
+
+export const ShoppingCartDecider = {
+    initialState,
+    evolve,
+    decide,
+};
