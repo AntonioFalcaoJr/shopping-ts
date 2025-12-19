@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  eventstore:
+    image: eventstore/eventstore:latest
+    container_name: shopping-eventstore
+    environment:
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_RUN_PROJECTIONS=All
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+      - EVENTSTORE_INSECURE=true
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+    ports:
+      - "2113:2113"  # HTTP API
+      - "1113:1113"  # TCP
+    volumes:
+      - eventstore-data:/var/lib/eventstore
+    networks:
+      - shopping-network
+
+  postgres:
+    image: postgres:15
+    container_name: shopping-postgres
+    environment:
+      POSTGRES_DB: shopping
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - shopping-network
+
+volumes:
+  eventstore-data:
+  rabbitmq-data:
+  postgres-data:
+
+networks:
+  shopping-network:
+    driver: bridge
