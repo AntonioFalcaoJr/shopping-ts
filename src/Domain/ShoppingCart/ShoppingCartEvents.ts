@@ -16,8 +16,8 @@ export interface ShoppingStarted {
         cartId: string;
         customerId: string;
         startedAt: Date;
+        status: 'Open';
     };
-    status: 'Open';
 }
 
 export interface ItemAddedToCart {
@@ -58,8 +58,8 @@ export interface ShoppingCartCleared {
     data: {
         cartId: string;
         clearedAt: Date;
+        status: 'Empty';
     };
-    status: 'Empty';
 }
 
 export const ShoppingCartEvents = {
@@ -69,8 +69,8 @@ export const ShoppingCartEvents = {
             cartId: cartId.getValue(),
             customerId: customerId.getValue(),
             startedAt,
+            status: 'Open',
         },
-        status: 'Open',
     }),
 
     ItemAddedToCart: (cartId: CartId, productId: ProductId, quantity: Quantity, unitPrice: Money, addedAt: Date): ItemAddedToCart => ({
@@ -111,7 +111,7 @@ export const ShoppingCartEvents = {
         data: {
             cartId: cartId.getValue(),
             clearedAt,
+            status: 'Empty',
         },
-        status: 'Empty',
     }),
 };
