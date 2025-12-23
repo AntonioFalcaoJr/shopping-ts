@@ -56,7 +56,7 @@ export function evolve(state: OrderState, event: OrderEvent): OrderState {
             const evt = event as OrderConfirmed;
             return {
                 ...state,
-                status: evt.status,
+                status: evt.data.status,
             };
         }
 
@@ -64,7 +64,7 @@ export function evolve(state: OrderState, event: OrderEvent): OrderState {
             const evt = event as OrderShipped;
             return {
                 ...state,
-                status: evt.status,
+                status: evt.data.status,
                 trackingNumber: evt.data.trackingNumber,
             };
         }
@@ -73,7 +73,7 @@ export function evolve(state: OrderState, event: OrderEvent): OrderState {
             const evt = event as OrderDelivered;
             return {
                 ...state,
-                status: evt.status,
+                status: evt.data.status,
             };
         }
 
@@ -81,7 +81,7 @@ export function evolve(state: OrderState, event: OrderEvent): OrderState {
             const evt = event as OrderCancelled;
             return {
                 ...state,
-                status: evt.status,
+                status: evt.data.status,
             };
         }
 
