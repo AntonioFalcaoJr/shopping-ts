@@ -13,18 +13,6 @@ services:
     networks:
       - shopping
 
-  postgres:
-    image: postgres:15
-    container_name: postgres
-    environment:
-      POSTGRES_DB: shopping
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    networks:
-      - shopping
-
 networks:
   shopping:
     driver: bridge
