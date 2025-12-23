@@ -1,21 +1,10 @@
-export interface OrderConfirmationEmail {
+export interface EmailMessage {
     to: string;
-    orderId: string;
-    customerName?: string;
-    orderTotal: {
-        amount: number;
-        currency: string;
-    };
-    items: Array<{
-        productId: string;
-        quantity: number;
-        unitPrice: {
-            amount: number;
-            currency: string;
-        };
-    }>;
+    subject: string;
+    body: string;
+    html?: string;
 }
 
 export interface IEmailGateway {
-    sendOrderConfirmation(email: OrderConfirmationEmail): Promise<void>;
+    send(message: EmailMessage): Promise<void>;
 }
