@@ -4,8 +4,7 @@ import {
     ShoppingStarted,
     ItemAddedToCart,
     ItemRemovedFromCart,
-    ItemQuantityIncreased,
-    ItemQuantityDecreased,
+    ItemQuantityChanged,
     ShoppingCartCleared,
 } from './ShoppingCartEvents';
 import {ShoppingCartCommand} from './ShoppingCartCommands';
@@ -81,37 +80,18 @@ export function evolve(
             };
         }
 
-        case 'ItemQuantityIncreased': {
-            const evt = event as ItemQuantityIncreased;
+        case 'ItemQuantityChanged': {
+            const evt = event as ItemQuantityChanged;
             const newItems = new Map(state.items);
             const existingItem = newItems.get(evt.data.productId);
 
             if (existingItem) {
-                newItems.set(evt.data.productId, {
-                    ...existingItem,
-                    quantity: existingItem.quantity + evt.data.quantity,
-                });
-            }
-
-            return {
-                ...state,
-                items: newItems,
-            };
-        }
-
-        case 'ItemQuantityDecreased': {
-            const evt = event as ItemQuantityDecreased;
-            const newItems = new Map(state.items);
-            const existingItem = newItems.get(evt.data.productId);
-
-            if (existingItem) {
-                const newQuantity = existingItem.quantity - evt.data.quantity;
-                if (newQuantity <= 0) {
+                if (evt.data.newQuantity <= 0) {
                     newItems.delete(evt.data.productId);
                 } else {
                     newItems.set(evt.data.productId, {
                         ...existingItem,
-                        quantity: newQuantity,
+                        quantity: evt.data.newQuantity,
                     });
                 }
             }
@@ -185,39 +165,21 @@ export function decide(
             ];
         }
 
-        case 'IncreaseItemQuantity': {
+        case 'ChangeItemQuantity': {
             if (state.status !== 'Open') {
                 throw new Error('Shopping cart is not open');
             }
             if (!state.items.has(command.data.productId.getValue())) {
                 throw new Error('Item not found in cart');
             }
-            return [
-                ShoppingCartEvents.ItemQuantityIncreased(
-                    command.data.cartId,
-                    command.data.productId,
-                    command.data.quantity,
-                    new Date()
-                ),
-            ];
-        }
-
-        case 'DecreaseItemQuantity': {
-            if (state.status !== 'Open') {
-                throw new Error('Shopping cart is not open');
-            }
-            const item = state.items.get(command.data.productId.getValue());
-            if (!item) {
-                throw new Error('Item not found in cart');
-            }
-            if (item.quantity < command.data.quantity.getValue()) {
-                throw new Error('Cannot decrease quantity below zero');
+            if (command.data.newQuantity.getValue() < 0) {
+                throw new Error('Quantity cannot be negative');
             }
             return [
-                ShoppingCartEvents.ItemQuantityDecreased(
+                ShoppingCartEvents.ItemQuantityChanged(
                     command.data.cartId,
                     command.data.productId,
-                    command.data.quantity,
+                    command.data.newQuantity,
                     new Date()
                 ),
             ];
