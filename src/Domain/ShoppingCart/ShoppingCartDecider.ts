@@ -19,14 +19,14 @@ export interface CartItem {
 }
 
 export interface ShoppingCartState {
-    status: 'Open' | 'Active' | 'Empty';
+    status: 'NotStarted' | 'Open' | 'Active' | 'Empty';
     cartId?: string;
     customerId?: string;
     items: Map<string, CartItem>;
 }
 
 export const initialState: ShoppingCartState = {
-    status: 'Open',
+    status: 'NotStarted',
     items: new Map(),
 };
 
@@ -122,7 +122,7 @@ export function decide(
 ): ShoppingCartEvent[] {
     switch (command.type) {
         case 'StartShopping': {
-            if (state.status !== 'Open') {
+            if (state.status !== 'NotStarted') {
                 throw new Error('Shopping cart already started');
             }
             return [
@@ -135,7 +135,7 @@ export function decide(
         }
 
         case 'AddItemToCart': {
-            if (state.status !== 'Open') {
+            if (state.status !== 'Open' && state.status !== 'Empty') {
                 console.log(`[DEBUG_LOG] state.status is: ${state.status}`);
                 throw new Error('Shopping cart is not open');
             }
@@ -151,7 +151,7 @@ export function decide(
         }
 
         case 'RemoveItemFromCart': {
-            if (state.status !== 'Open') {
+            if (state.status !== 'Open' && state.status !== 'Empty') {
                 throw new Error('Shopping cart is not open');
             }
             if (!state.items.has(command.data.productId.getValue())) {
@@ -167,7 +167,7 @@ export function decide(
         }
 
         case 'ChangeItemQuantity': {
-            if (state.status !== 'Open') {
+            if (state.status !== 'Open' && state.status !== 'Empty') {
                 throw new Error('Shopping cart is not open');
             }
             if (!state.items.has(command.data.productId.getValue())) {
@@ -187,7 +187,7 @@ export function decide(
         }
 
         case 'ClearShoppingCart': {
-            if (state.status !== 'Open') {
+            if (state.status !== 'Open' && state.status !== 'Empty') {
                 throw new Error('Shopping cart is not active');
             }
             return [ShoppingCartEvents.ShoppingCartCleared(command.data.cartId, new Date())];
