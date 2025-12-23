@@ -139,7 +139,7 @@ export class ShoppingCartController {
         }
     }
 
-    private async getShoppingCarts(res: Response): Promise<void> {
+    private async getShoppingCarts(_req: Request, res: Response): Promise<void> {
         try {
             const carts = await this.queryHandler.getAllShoppingCarts();
             res.status(200).json(carts);

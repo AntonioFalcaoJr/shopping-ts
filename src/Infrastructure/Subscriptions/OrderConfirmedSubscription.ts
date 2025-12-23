@@ -20,7 +20,7 @@ export class OrderConfirmedSubscription {
             eachBatch: async (events) => {
                 for (const event of events) {
                     if (event.type === 'OrderConfirmed') {
-                        await this.handleOrderConfirmed(event.data as OrderConfirmed);
+                        await this.handleOrderConfirmed(event as unknown as OrderConfirmed);
                     }
                 }
             }

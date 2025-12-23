@@ -138,7 +138,7 @@ export class OrderController {
         }
     }
 
-    private async getOrders(res: Response): Promise<void> {
+    private async getOrders(_req: Request, res: Response): Promise<void> {
         try {
             const orders = await this.queryHandler.getAllOrders();
             res.status(200).json(orders);

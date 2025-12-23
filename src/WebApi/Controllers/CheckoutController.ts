@@ -160,7 +160,7 @@ export class CheckoutController {
     }
   }
 
-  private async getCheckouts(res: Response): Promise<void> {
+  private async getCheckouts(_req: Request, res: Response): Promise<void> {
     try {
       const checkouts = await this.queryHandler.getAllCheckouts();
       res.status(200).json(checkouts);
