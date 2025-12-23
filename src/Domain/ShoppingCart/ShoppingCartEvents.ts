@@ -7,8 +7,7 @@ export type ShoppingCartEvent =
     | ShoppingStarted
     | ItemAddedToCart
     | ItemRemovedFromCart
-    | ItemQuantityIncreased
-    | ItemQuantityDecreased
+    | ItemQuantityChanged
     | ShoppingCartCleared;
 
 export interface ShoppingStarted {
@@ -44,23 +43,13 @@ export interface ItemRemovedFromCart {
     };
 }
 
-export interface ItemQuantityIncreased {
-    type: 'ItemQuantityIncreased';
+export interface ItemQuantityChanged {
+    type: 'ItemQuantityChanged';
     data: {
         cartId: string;
         productId: string;
-        quantity: number;
-        increasedAt: Date;
-    };
-}
-
-export interface ItemQuantityDecreased {
-    type: 'ItemQuantityDecreased';
-    data: {
-        cartId: string;
-        productId: string;
-        quantity: number;
-        decreasedAt: Date;
+        newQuantity: number;
+        changedAt: Date;
     };
 }
 
@@ -107,23 +96,13 @@ export const ShoppingCartEvents = {
         },
     }),
 
-    ItemQuantityIncreased: (cartId: CartId, productId: ProductId, quantity: Quantity, increasedAt: Date): ItemQuantityIncreased => ({
-        type: 'ItemQuantityIncreased',
+    ItemQuantityChanged: (cartId: CartId, productId: ProductId, newQuantity: Quantity, changedAt: Date): ItemQuantityChanged => ({
+        type: 'ItemQuantityChanged',
         data: {
             cartId: cartId.getValue(),
             productId: productId.getValue(),
-            quantity: quantity.getValue(),
-            increasedAt,
-        },
-    }),
-
-    ItemQuantityDecreased: (cartId: CartId, productId: ProductId, quantity: Quantity, decreasedAt: Date): ItemQuantityDecreased => ({
-        type: 'ItemQuantityDecreased',
-        data: {
-            cartId: cartId.getValue(),
-            productId: productId.getValue(),
-            quantity: quantity.getValue(),
-            decreasedAt,
+            newQuantity: newQuantity.getValue(),
+            changedAt,
         },
     }),
 
