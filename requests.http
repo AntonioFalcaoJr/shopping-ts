@@ -1,0 +1,188 @@
+@baseUrl = http://localhost:3000
+@cartId = {{ $guid }}
+@customerId = customer-456
+@productId = product-789
+@checkoutId = {{ $guid }}
+@orderId = {{ $guid }}
+
+### Health Check
+GET {{baseUrl}}/health
+
+###########################################################
+### SHOPPING CART FLOW
+###########################################################
+
+### 1. Start Shopping
+# @name startShopping
+POST {{baseUrl}}/api/carts
+Content-Type: application/json
+
+{
+    "cartId": "{{cartId}}",
+    "customerId": "{{customerId}}"
+}
+
+### 2. Add Item to Cart
+POST {{baseUrl}}/api/carts/{{cartId}}/items
+Content-Type: application/json
+
+{
+    "productId": "{{productId}}",
+    "quantity": 2,
+    "unitPrice": {
+        "amount": 100,
+        "currency": "USD"
+    }
+}
+
+### 3. Change Item Quantity
+PATCH {{baseUrl}}/api/carts/{{cartId}}/items/{{productId}}/quantity
+Content-Type: application/json
+
+{
+    "newQuantity": 3
+}
+
+### 4. Get Shopping Cart
+GET {{baseUrl}}/api/carts/{{cartId}}
+
+###########################################################
+### CHECKOUT FLOW
+###########################################################
+
+### 5. Initiate Checkout
+POST {{baseUrl}}/api/checkouts
+Content-Type: application/json
+
+{
+    "checkoutId": "{{checkoutId}}",
+    "cartId": "{{cartId}}",
+    "customerId": "{{customerId}}",
+    "totalAmount": {
+        "amount": 300,
+        "currency": "USD"
+    }
+}
+
+### 6. Set Payment Method
+POST {{baseUrl}}/api/checkouts/{{checkoutId}}/payment-method
+Content-Type: application/json
+
+{
+    "type": "CreditCard",
+    "details": {
+        "cardNumber": "1234-5678-9012-3456",
+        "expiryMonth": 12,
+        "expiryYear": 2025
+    }
+}
+
+### 7. Apply Coupon
+POST {{baseUrl}}/api/checkouts/{{checkoutId}}/coupons
+Content-Type: application/json
+
+{
+    "couponCode": "DISCOUNT10",
+    "discountAmount": {
+        "amount": 10,
+        "currency": "USD"
+    }
+}
+
+### 8. Complete Checkout
+POST {{baseUrl}}/api/checkouts/{{checkoutId}}/complete
+Content-Type: application/json
+
+{}
+
+###########################################################
+### ORDER FLOW
+###########################################################
+
+### 9. Create Order
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+
+{
+    "orderId": "{{orderId}}",
+    "cartId": "{{cartId}}",
+    "checkoutId": "{{checkoutId}}",
+    "customerId": "{{customerId}}",
+    "items": [
+        {
+            "productId": "{{productId}}",
+            "quantity": 3,
+            "unitPrice": {
+                "amount": 100,
+                "currency": "USD"
+            }
+        }
+    ],
+    "totalAmount": {
+        "amount": 290,
+        "currency": "USD"
+    },
+    "shippingAddress": {
+        "street": "123 Main St",
+        "city": "Anytown",
+        "state": "CA",
+        "zipCode": "12345",
+        "country": "USA"
+    }
+}
+
+### 10. Confirm Order
+POST {{baseUrl}}/api/orders/{{orderId}}/confirm
+Content-Type: application/json
+
+{}
+
+### 11. Get Order Details
+GET {{baseUrl}}/api/orders/{{orderId}}
+
+###########################################################
+### QUERY / MANAGEMENT ENDPOINTS
+###########################################################
+
+### Get All Shopping Carts
+GET {{baseUrl}}/api/carts
+
+### Get All Checkouts
+GET {{baseUrl}}/api/checkouts
+
+### Get All Orders
+GET {{baseUrl}}/api/orders
+
+### Get All Orders for Customer
+GET {{baseUrl}}/api/customers/{{customerId}}/orders
+
+### Get All Shopping Carts for Customer
+GET {{baseUrl}}/api/customers/{{customerId}}/carts
+
+### Ship Order
+POST {{baseUrl}}/api/orders/{{orderId}}/ship
+Content-Type: application/json
+
+{
+    "trackingNumber": "TRK-123456"
+}
+
+### Deliver Order
+POST {{baseUrl}}/api/orders/{{orderId}}/deliver
+Content-Type: application/json
+
+{}
+
+### Cancel Order
+POST {{baseUrl}}/api/orders/{{orderId}}/cancel
+Content-Type: application/json
+
+{
+    "reason": "Customer request"
+}
+
+### Remove Item from Cart
+DELETE {{baseUrl}}/api/carts/{{cartId}}/items/{{productId}}
+
+### Clear Shopping Cart
+DELETE {{baseUrl}}/api/carts/{{cartId}}
