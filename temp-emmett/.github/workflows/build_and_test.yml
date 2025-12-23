@@ -1,0 +1,107 @@
+name: Build and test
+
+on:
+  # run it on push to the default repository branch
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "!src/docs/**"
+      - "./.github/workflows/build_and_test.yml"
+
+  # run it during pull request
+  pull_request:
+    paths:
+      - "src/**"
+      - "!src/docs/**"
+      - "./.github/workflows/build_and_test.yml"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: src
+
+jobs:
+  build-and-test-code:
+    name: Build application code
+    # use system defined below in the tests matrix
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ./src/.nvmrc
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright chromium browser
+        working-directory: ./src/e2e/browser
+        run: npx playwright install chromium
+
+      - name: Build TS
+        run: npm run build:ts
+
+      - name: Run linting (ESlint and Prettier)
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test
+
+      - name: Pack Emmett locally to tar file
+        shell: bash
+        run: echo "PACKAGE_FILENAME=$(npm pack --json --pack-destination './e2e/esmCompatibility' -w @event-driven-io/emmett | jq -r '.[] | .filename')" >> $GITHUB_ENV
+
+      - name: Use Emmett in the compatibility test project
+        working-directory: ./src/e2e/esmCompatibility
+        run: npm install ${{ env.PACKAGE_FILENAME }}
+
+      - name: Install packages in the compatibility test project
+        working-directory: ./src/e2e/esmCompatibility
+        run: npm install
+
+      - name: Build the compatibility test project final
+        working-directory: ./src/e2e/esmCompatibility
+        shell: bash
+        run: |
+          if npm run generate 2>&1 | grep -iF '[request error]'; then
+            echo "Errors found, failing the step." && exit 1
+          else
+            echo "No errors found, proceeding..."
+          fi
+
+      - name: Use Emmett in the browser compatibility test project
+        working-directory: ./src/e2e/browser
+        run: npm install ../esmCompatibility/${{ env.PACKAGE_FILENAME }}
+
+      - name: Install packages in the browser compatibility test project
+        working-directory: ./src/e2e/browser
+        run: npm install
+
+      - name: Install Playwright chromium browser
+        working-directory: ./src/e2e/browser
+        run: npx playwright install chromium
+
+      - name: Run browser compatibility test project
+        working-directory: ./src/e2e/browser
+        run: npm test
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install packages in Bun compatibility test project
+        working-directory: ./src/e2e/bun
+        run: bun install
+
+      - name: Run Bun compatibility test project
+        working-directory: ./src/e2e/bun
+        run: bun run index.ts

@@ -1,0 +1,54 @@
+{
+  "extends": "./tsconfig.shared.json",
+  "include": ["docs/**/*.ts", "./tsup.config.ts"],
+  "exclude": ["node_modules", "tmp"],
+  "files": [],
+  "compilerOptions": {
+    "noEmit": true /* Do not emit outputs. */,
+    "paths": {
+      "@event-driven-io/emmett": ["./packages/emmett/src"],
+      "@event-driven-io/emmett-expressjs": ["./packages/emmett-expressjs/src"],
+      "@event-driven-io/emmett-postgresql": [
+        "./packages/emmett-postgresql/src"
+      ],
+      "@event-driven-io/emmett-sqlite": ["./packages/emmett-sqlite/src"],
+      "@event-driven-io/emmett-mongodb": ["./packages/emmett-mongodb/src"],
+      "@event-driven-io/emmett-esdb": ["./packages/emmett-esdb/src"],
+      "@event-driven-io/emmett-honojs": ["./packages/emmett-honojs/src"],
+      "@event-driven-io/emmett-fastify": ["./packages/emmett-fastify/src"],
+      "@event-driven-io/emmett-tests": ["./packages/emmett-tests/src"]
+    }
+  },
+  "references": [
+    {
+      "path": "./packages/emmett/"
+    },
+    {
+      "path": "./packages/emmett-testcontainers/"
+    },
+    {
+      "path": "./packages/emmett-postgresql/"
+    },
+    {
+      "path": "./packages/emmett-sqlite/"
+    },
+    {
+      "path": "./packages/emmett-mongodb/"
+    },
+    {
+      "path": "./packages/emmett-esdb/"
+    },
+    {
+      "path": "./packages/emmett-expressjs/"
+    },
+    {
+      "path": "./packages/emmett-honojs/"
+    },
+    {
+      "path": "./packages/emmett-fastify/"
+    },
+    {
+      "path": "./packages/emmett-tests"
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+{
+  "name": "@event-driven-io/core",
+  "type": "module",
+  "version": "0.42.0-beta.1",
+  "description": "Emmett - Event Sourcing development made simple",
+  "engines": {
+    "node": ">=24.12.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "npm",
+      "onFail": "error"
+    }
+  },
+  "private": true,
+  "scripts": {
+    "setup": "cat .nvmrc | nvm install; nvm use",
+    "build": "run-s build:ts build:emmett build:esdb build:kurrentdb build:mongodb build:postgresql build:sqlite build:expressjs build:honojs build:fastify build:testcontainers build:tests",
+    "build:ts": "tsc -b",
+    "build:ts:clean": "tsc --build --clean",
+    "build:ts:watch": "tsc -b --watch",
+    "build:emmett": "npm run build -w packages/emmett",
+    "build:esdb": "npm run build -w packages/emmett-esdb",
+    "build:kurrentdb": "npm run build -w packages/emmett-kurrentdb",
+    "build:mongodb": "npm run build -w packages/emmett-mongodb",
+    "build:postgresql": "npm run build -w packages/emmett-postgresql",
+    "build:sqlite": "npm run build -w packages/emmett-sqlite",
+    "build:expressjs": "npm run build -w packages/emmett-expressjs",
+    "build:honojs": "npm run build -w packages/emmett-honojs",
+    "build:fastify": "npm run build -w packages/emmett-fastify",
+    "build:testcontainers": "npm run build -w packages/emmett-testcontainers",
+    "build:tests": "npm run build -w packages/emmett-tests",
+    "lint": "npm run lint:eslint && npm run lint:prettier",
+    "lint:prettier": "prettier --check \"**/**/!(*.d).{ts,json,md}\"",
+    "lint:eslint": "eslint '**/*.ts'",
+    "fix": "run-s fix:eslint fix:prettier",
+    "fix:prettier": "prettier --write \"**/**/!(*.d).{ts,json,md}\"",
+    "fix:eslint": "eslint '**/*.ts' --fix",
+    "test": "run-s test:unit test:int test:e2e",
+    "test:unit": "glob -d -c \"node --import tsx --test\" --ignore './packages/emmett-sqlite/**' **/*.unit.spec.ts && vitest run \".unit.spec\"",
+    "test:int": "glob -d -c \"node --import tsx --test\" --ignore './packages/emmett-sqlite/**' **/*.int.spec.ts && vitest run \".int.spec\"",
+    "test:e2e": "glob -d -c \"node --import tsx --test\" --ignore './packages/emmett-sqlite/**' **/*.e2e.spec.ts && vitest run \".e2e.spec\"",
+    "test:watch": "run-p test:unit:watch test:int:watch test:e2e:watch",
+    "test:unit:watch": "glob -d -c \"node --import tsx --test --watch\" --ignore './packages/emmett-sqlite/**' **/*.unit.spec.ts",
+    "test:int:watch": "glob -d -c \"node --import tsx --test --watch\" --ignore './packages/emmett-sqlite/**' **/*.int.spec.ts",
+    "test:e2e:watch": "glob -d -c \"node --import tsx --test --watch\" --ignore './packages/emmett-sqlite/**' **/*.e2e.spec.ts",
+    "test:file": "node --preserve-symlinks --import tsx --test",
+    "test:file:watch": "node --preserve-symlinks --import tsx --test --watch",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "test:vitest": "vitest run",
+    "test:vitest:watch": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/event-driven-io/emmett.git"
+  },
+  "keywords": [
+    "Event Sourcing"
+  ],
+  "author": "Oskar Dudycz",
+  "bugs": {
+    "url": "https://github.com/event-driven-io/emmett/issues"
+  },
+  "homepage": "https://event-driven-io.github.io/emmett/",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
+    "@types/node": "^22.5.0",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.2.0",
+    "@typescript-eslint/parser": "^8.2.0",
+    "@vitest/browser": "^3.0.8",
+    "eslint": "^9.9.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "glob": "^11.0.0",
+    "npm-run-all2": "^6.2.2",
+    "playwright": "^1.51.0",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsup": "^8.2.4",
+    "tsx": "^4.17.0",
+    "typescript": "^5.5.4",
+    "uuid": "^10.0.0",
+    "vitepress": "^1.3.3",
+    "vitest": "^3.0.8"
+  },
+  "peerDependencies": {
+    "@event-driven-io/pongo": "0.16.4",
+    "@types/express": "4.17.21",
+    "@types/node": "^22.4.1",
+    "@types/supertest": "6.0.2",
+    "supertest": "7.0.0"
+  },
+  "workspaces": [
+    "packages/emmett",
+    "packages/emmett-postgresql",
+    "packages/emmett-mongodb",
+    "packages/emmett-esdb",
+    "packages/emmett-kurrentdb",
+    "packages/emmett-expressjs",
+    "packages/emmett-honojs",
+    "packages/emmett-sqlite",
+    "packages/emmett-testcontainers",
+    "packages/emmett-fastify",
+    "packages/emmett-tests"
+  ],
+  "dependencies": {
+    "@testcontainers/mongodb": "^10.13.2",
+    "@testcontainers/postgresql": "^10.10.3",
+    "@types/benchmark": "^2.1.5",
+    "0x": "^4.1.4",
+    "benchmark": "^2.1.4",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5"
+  }
+}

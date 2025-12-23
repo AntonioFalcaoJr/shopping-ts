@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "HOST=0.0.0.0 nuxt dev",
+    "generate": "nuxt generate --fail-on-error",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@event-driven-io/emmett": "0.20.1",
+    "nuxt": "4.2.2",
+    "ts-pattern": "^5.0.8"
+  }
+}

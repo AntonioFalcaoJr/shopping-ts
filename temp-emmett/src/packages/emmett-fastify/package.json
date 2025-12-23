@@ -1,0 +1,63 @@
+{
+  "name": "@event-driven-io/emmett-fastify",
+  "version": "0.42.0-beta.1",
+  "type": "module",
+  "description": "Emmett - Event Sourcing development made simple",
+  "scripts": {
+    "build": "tsup",
+    "build:ts": "tsc",
+    "build:ts:watch": "tsc -b --watch",
+    "test": "run-s test:unit test:int test:e2e",
+    "test:unit": "glob -c \"node --import tsx --test\" **/*.unit.spec.ts",
+    "test:int": "glob -c \"node --import tsx --test\" **/*.int.spec.ts",
+    "test:e2e": "glob -c \"node --import tsx --test\" **/*.e2e.spec.ts",
+    "test:watch": "node --import tsx --test --watch",
+    "test:unit:watch": "glob -c \"node --import tsx --test --watch\" **/*.unit.spec.ts",
+    "test:int:watch": "glob -c \"node --import tsx --test --watch\" **/*.int.spec.ts",
+    "test:e2e:watch": "glob -c \"node --import tsx --test --watch\" **/*.e2e.spec.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/event-driven-io/emmett.git"
+  },
+  "keywords": [
+    "Event Sourcing",
+    "Fastify"
+  ],
+  "author": "Oskar Dudycz",
+  "contributors": [
+    "Mateusz Kubaszek mkubasz@gmail.com"
+  ],
+  "bugs": {
+    "url": "https://github.com/event-driven-io/emmett/issues"
+  },
+  "homepage": "https://event-driven-io.github.io/emmett/",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {
+    "@event-driven-io/emmett": "0.42.0-beta.1",
+    "fastify": "^4.28.1",
+    "@fastify/compress": "^7.0.3",
+    "@fastify/etag": "^5.2.0",
+    "@fastify/formbody": "^7.4.0",
+    "close-with-grace": "^2.1.0"
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "name": "@event-driven-io/emmett-sqlite",
+  "version": "0.42.0-beta.1",
+  "type": "module",
+  "description": "Emmett - SQLite - Event Sourcing development made simple",
+  "scripts": {
+    "build": "tsup",
+    "build:ts": "tsc",
+    "build:ts:watch": "tsc -b --watch",
+    "test": "vitest run",
+    "test:unit": "vitest run \".unit.spec\"",
+    "test:int": "vitest run \".int.spec\"",
+    "test:e2e": "vitest run \".e2e.spec\"",
+    "test:watch": "vitest",
+    "test:unit:watch": "vitest \".unit.spec\"",
+    "test:int:watch": "vitest \".int.spec\"",
+    "test:e2e:watch": "vitest \".e2e.spec\"",
+    "benchmark": "node --import tsx src/benchmarks/index.ts",
+    "flamegraph": "0x -D \"0x/{pid}\" -- node --import tsx src/benchmarks/ox.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/event-driven-io/emmett.git"
+  },
+  "keywords": [
+    "Event Sourcing"
+  ],
+  "author": " ",
+  "bugs": {
+    "url": "https://github.com/event-driven-io/emmett/issues"
+  },
+  "homepage": "https://event-driven-io.github.io/emmett/",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./cli": {
+      "import": {
+        "types": "./dist/cli.d.ts",
+        "default": "./dist/cli.js"
+      },
+      "require": {
+        "types": "./dist/cli.d.cts",
+        "default": "./dist/cli.cjs"
+      }
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/index.d.ts"
+      ],
+      "cli": [
+        "./dist/cli.d.ts"
+      ]
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/sqlite3": "^3.1.11"
+  },
+  "peerDependencies": {
+    "@event-driven-io/emmett": "0.42.0-beta.1",
+    "sqlite3": "^5.1.7"
+  }
+}
