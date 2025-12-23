@@ -1,7 +1,7 @@
 import { OrderCommand } from '../../Domain/Order/OrderCommands';
 import { OrderDecider } from '../../Domain/Order/OrderDecider';
 import { OrderEvent } from '../../Domain/Order/OrderEvents';
-import { IEventStore } from './ShoppingCartCommandHandlers';
+import { IEventStore } from '../Gateways/IEventStore';
 
 export class OrderCommandHandler {
     constructor(
@@ -23,8 +23,6 @@ export class OrderCommandHandler {
         const newEvents = OrderDecider.decide(command, result.state);
 
         await this.eventStore.appendToStream(streamId, newEvents);
-        
-        // Events are automatically picked up by KurrentDB subscriptions
     }
 
     private getStreamId(command: OrderCommand): string {

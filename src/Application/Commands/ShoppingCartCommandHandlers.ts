@@ -1,27 +1,7 @@
 import { ShoppingCartCommand } from '../../Domain/ShoppingCart/ShoppingCartCommands';
 import { ShoppingCartDecider } from '../../Domain/ShoppingCart/ShoppingCartDecider';
 import { ShoppingCartEvent } from '../../Domain/ShoppingCart/ShoppingCartEvents';
-import {
-    AggregateStreamOptions,
-    AggregateStreamResultWithGlobalPosition,
-    AppendToStreamOptions,
-    AppendToStreamResultWithGlobalPosition,
-    Event,
-    ReadEventMetadataWithGlobalPosition,
-} from '@event-driven-io/emmett';
-
-export interface IEventStore {
-    aggregateStream<State, EventType extends Event, Metadata extends ReadEventMetadataWithGlobalPosition = ReadEventMetadataWithGlobalPosition>(
-        streamName: string,
-        options: AggregateStreamOptions<State, EventType, Metadata>
-    ): Promise<AggregateStreamResultWithGlobalPosition<State>>;
-    
-    appendToStream<EventType extends Event>(
-        streamName: string,
-        events: EventType[],
-        options?: AppendToStreamOptions
-    ): Promise<AppendToStreamResultWithGlobalPosition>;
-}
+import { IEventStore } from '../Gateways/IEventStore';
 
 export class ShoppingCartCommandHandler {
     constructor(
@@ -43,9 +23,6 @@ export class ShoppingCartCommandHandler {
         const newEvents = ShoppingCartDecider.decide(command, result.state);
 
         await this.eventStore.appendToStream(streamId, newEvents);
-        
-        // Events are automatically picked up by KurrentDB subscriptions
-        // No need for explicit event bus publishing
     }
 
     private getStreamId(command: ShoppingCartCommand): string {
