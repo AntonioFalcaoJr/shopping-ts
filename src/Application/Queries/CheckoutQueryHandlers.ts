@@ -1,4 +1,4 @@
-import { IProjectionGateway } from './ShoppingCartQueryHandlers';
+import { IProjectionGateway } from '../Gateways/IProjectionGateway';
 
 export interface CheckoutReadModel {
   checkoutId: string;
