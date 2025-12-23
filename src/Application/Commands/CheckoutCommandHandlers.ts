@@ -1,30 +1,30 @@
-import {CheckoutCommand} from '../../Domain/Checkout/CheckoutCommands';
-import {CheckoutDecider} from '../../Domain/Checkout/CheckoutDecider';
-import {CheckoutEvent} from '../../Domain/Checkout/CheckoutEvents';
-import {IEventStoreGateway, IEventBusGateway} from './ShoppingCartCommandHandlers';
+import { CheckoutCommand } from '../../Domain/Checkout/CheckoutCommands';
+import { CheckoutDecider } from '../../Domain/Checkout/CheckoutDecider';
+import { CheckoutEvent } from '../../Domain/Checkout/CheckoutEvents';
+import { IEventStore } from './ShoppingCartCommandHandlers';
 
 export class CheckoutCommandHandler {
     constructor(
-        private readonly eventStore: IEventStoreGateway,
-        private readonly eventBus: IEventBusGateway
+        private readonly eventStore: IEventStore
     ) {
     }
 
     async handle(command: CheckoutCommand): Promise<void> {
         const streamId = this.getStreamId(command);
 
-        const events = await this.eventStore.loadEvents<CheckoutEvent>(streamId);
+        const result = await this.eventStore.aggregateStream<
+            typeof CheckoutDecider.initialState,
+            CheckoutEvent
+        >(streamId, {
+            evolve: CheckoutDecider.evolve,
+            initialState: () => CheckoutDecider.initialState,
+        });
 
-        let state = CheckoutDecider.initialState;
-        for (const event of events) {
-            state = CheckoutDecider.evolve(state, event);
-        }
+        const newEvents = CheckoutDecider.decide(command, result.state);
 
-        const newEvents = CheckoutDecider.decide(command, state);
-
-        await this.eventStore.appendEvents(streamId, newEvents);
-
-        await this.eventBus.publish(newEvents);
+        await this.eventStore.appendToStream(streamId, newEvents);
+        
+        // Events are automatically picked up by KurrentDB subscriptions
     }
 
     private getStreamId(command: CheckoutCommand): string {
