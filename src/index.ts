@@ -1,87 +1,93 @@
 import express, {Application} from 'express';
 import {KurrentDBEventStoreGateway} from './Infrastructure/EventStore/KurrentDBEventStoreGateway';
-import {RabbitMQEventBusGateway} from './Infrastructure/EventBus/RabbitMQEventBusGateway';
-import {PostgresProjectionGateway} from './Infrastructure/Projections/PostgresProjectionGateway';
 import {ShoppingCartCommandHandler} from './Application/Commands/ShoppingCartCommandHandlers';
 import {CheckoutCommandHandler} from './Application/Commands/CheckoutCommandHandlers';
 import {OrderCommandHandler} from './Application/Commands/OrderCommandHandlers';
 import {ShoppingCartQueryHandler} from './Application/Queries/ShoppingCartQueryHandlers';
 import {CheckoutQueryHandler} from './Application/Queries/CheckoutQueryHandlers';
 import {OrderQueryHandler} from './Application/Queries/OrderQueryHandlers';
-import {ShoppingCartController} from './Presentation/Controllers/ShoppingCartController';
-import {CheckoutController} from './Presentation/Controllers/CheckoutController';
-import {OrderController} from './Presentation/Controllers/OrderController';
+import {ShoppingCartController} from './WebApi/Controllers/ShoppingCartController';
+import {CheckoutController} from './WebApi/Controllers/CheckoutController';
+import {OrderController} from './WebApi/Controllers/OrderController';
+import {ShoppingCartProjectionSubscription} from './Infrastructure/Projections/ShoppingCartProjectionSubscription';
+import {OrderProjectionSubscription} from './Infrastructure/Projections/OrderProjectionSubscription';
+import {OrderConfirmedSubscription} from './Infrastructure/Subscriptions/OrderConfirmedSubscription';
+import {KurrentDBProjectionGateway} from './Infrastructure/Projections/KurrentDBProjectionGateway';
+import {EmailGateway} from './Infrastructure/SMTP/EmailGateway';
+import {SendOrderConfirmationEmailUseCase} from './Application/UseCases/SendOrderConfirmationEmailUseCase';
 
 class ShoppingApplication {
     private app: Application;
     private eventStoreGateway: KurrentDBEventStoreGateway;
-    private eventBusGateway: RabbitMQEventBusGateway;
-    private projectionGateway: PostgresProjectionGateway;
+    private shoppingCartProjection: ShoppingCartProjectionSubscription;
+    private orderProjection: OrderProjectionSubscription;
+    private orderConfirmedSubscription: OrderConfirmedSubscription;
+    private projectionGateway: KurrentDBProjectionGateway;
+    private emailGateway: EmailGateway;
 
     constructor() {
         this.app = express();
         this.app.use(express.json());
 
-        // Initialize infrastructure gateways
         this.eventStoreGateway = new KurrentDBEventStoreGateway(
-            process.env.EVENTSTORE_CONNECTION_STRING || 'esdb://localhost:2113?tls=false'
+            process.env.EVENTSTORE_CONNECTION_STRING || 'kurrent://localhost:2113?tls=false'
         );
 
-        this.eventBusGateway = new RabbitMQEventBusGateway(
-            process.env.RABBITMQ_CONNECTION_STRING || 'amqp://localhost'
+        this.emailGateway = new EmailGateway();
+
+        this.shoppingCartProjection = new ShoppingCartProjectionSubscription(
+            this.eventStoreGateway.client
+        );
+        this.orderProjection = new OrderProjectionSubscription(
+            this.eventStoreGateway.client
         );
 
-        this.projectionGateway = new PostgresProjectionGateway({
-            host: process.env.POSTGRES_HOST || 'localhost',
-            port: parseInt(process.env.POSTGRES_PORT || '5432'),
-            database: process.env.POSTGRES_DB || 'shopping',
-            user: process.env.POSTGRES_USER || 'postgres',
-            password: process.env.POSTGRES_PASSWORD || 'postgres',
-        });
+        this.orderConfirmedSubscription = new OrderConfirmedSubscription(
+            this.eventStoreGateway.client,
+            this.emailGateway
+        );
+
+        this.projectionGateway = new KurrentDBProjectionGateway(
+            this.shoppingCartProjection,
+            this.orderProjection
+        );
     }
 
     async initialize(): Promise<void> {
         console.log('Initializing Shopping Application...');
 
-        // Connect to RabbitMQ
-        await this.eventBusGateway.connect();
-        console.log('✓ Connected to RabbitMQ');
+        await this.shoppingCartProjection.start();
+        console.log('ShoppingCart projection subscription started');
 
-        // Initialize Postgres schema
-        await this.projectionGateway.initializeSchema();
-        console.log('✓ Initialized Postgres schema');
+        await this.orderProjection.start();
+        console.log('Order projection subscription started');
 
-        // Setup dependency injection and controllers
+        await this.orderConfirmedSubscription.start();
+        console.log('OrderConfirmed side-effect subscription started');
+
         this.setupControllers();
-        console.log('✓ Controllers configured');
+        console.log('Controllers configured');
 
-        // Setup error handling
         this.setupErrorHandling();
     }
 
     private setupControllers(): void {
-        // Command handlers
         const shoppingCartCommandHandler = new ShoppingCartCommandHandler(
-            this.eventStoreGateway,
-            this.eventBusGateway
+            this.eventStoreGateway.eventStore
         );
 
         const checkoutCommandHandler = new CheckoutCommandHandler(
-            this.eventStoreGateway,
-            this.eventBusGateway
+            this.eventStoreGateway.eventStore
         );
 
         const orderCommandHandler = new OrderCommandHandler(
-            this.eventStoreGateway,
-            this.eventBusGateway
+            this.eventStoreGateway.eventStore
         );
 
-        // Query handlers
         const shoppingCartQueryHandler = new ShoppingCartQueryHandler(this.projectionGateway);
         const checkoutQueryHandler = new CheckoutQueryHandler(this.projectionGateway);
         const orderQueryHandler = new OrderQueryHandler(this.projectionGateway);
 
-        // Controllers
         const shoppingCartController = new ShoppingCartController(
             shoppingCartCommandHandler,
             shoppingCartQueryHandler
@@ -97,12 +103,10 @@ class ShoppingApplication {
             orderQueryHandler
         );
 
-        // Register routes
         this.app.use('/api', shoppingCartController.getRouter());
         this.app.use('/api', checkoutController.getRouter());
         this.app.use('/api', orderController.getRouter());
 
-        // Health check endpoint
         this.app.get('/health', (_, res) => {
             res.status(200).json({status: 'healthy', timestamp: new Date().toISOString()});
         });
@@ -122,21 +126,29 @@ class ShoppingApplication {
             console.log(`\n Shopping Bounded Context API running on port ${port}`);
             console.log(`   Health check: http://localhost:${port}/health`);
             console.log(`   API endpoints: http://localhost:${port}/api`);
-            console.log('\nArchitecture:');
-            console.log('   ✓ Clean + Vertical Slice Architecture');
-            console.log('   ✓ CQRS + Event Sourcing (Emmett patterns)');
-            console.log('   ✓ KurrentDB for event store');
-            console.log('   ✓ RabbitMQ for event bus');
-            console.log('   ✓ Postgres for read model projections\n');
+            console.log('\n Architecture:');
+            console.log('    Clean Architecture + Vertical Slice');
+            console.log('    CQRS + Event Sourcing (Emmett + Decider pattern)');
+            console.log('    KurrentDB for event store');
+            console.log('    KurrentDB Subscriptions for projections (read models)');
+            console.log('    KurrentDB Subscriptions for side effects (email notifications)');
+            console.log('    In-memory projections via subscriptions\n');
         });
     }
 
     async shutdown(): Promise<void> {
-        console.log('\nShutting down gracefully...');
+        console.log('\n Shutting down gracefully...');
+
+        // Stop all subscriptions
+        await this.shoppingCartProjection.stop();
+        await this.orderProjection.stop();
+        await this.orderConfirmedSubscription.stop();
+        console.log(' All subscriptions stopped');
+
+        // Close event store connection
         await this.eventStoreGateway.close();
-        await this.eventBusGateway.close();
-        await this.projectionGateway.close();
-        console.log('✓ All connections closed');
+        console.log(' Event store connection closed');
+
         process.exit(0);
     }
 }
