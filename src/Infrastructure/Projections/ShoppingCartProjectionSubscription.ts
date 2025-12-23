@@ -1,5 +1,5 @@
 import { KurrentDBClient } from '@kurrent/kurrentdb-client';
-import { kurrentDBSubscription, KurrentDBSubscription } from '@event-driven-io/emmett-kurrentdb';
+import { kurrentDBSubscription, KurrentDBSubscription } from '../EmmettKurrentDB';
 import { ShoppingCartReadModel } from '../../Application/Queries/ShoppingCartQueryHandlers';
 
 export class ShoppingCartProjectionSubscription {
@@ -135,7 +135,7 @@ export class ShoppingCartProjectionSubscription {
 
     async start(): Promise<void> {
         console.log('[ShoppingCartProjection] Starting projection subscription...');
-        await this.subscription.start({ startFrom: 'BEGINNING' });
+        this.subscription.start({ startFrom: 'BEGINNING' });
         console.log('[ShoppingCartProjection] Projection subscription started');
     }
 
