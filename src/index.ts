@@ -14,7 +14,7 @@ import {OrderProjectionSubscription} from './Infrastructure/Projections/OrderPro
 import {OrderConfirmedSubscription} from './Infrastructure/Subscriptions/OrderConfirmedSubscription';
 import {KurrentDBProjectionGateway} from './Infrastructure/Projections/KurrentDBProjectionGateway';
 import {EmailGateway} from './Infrastructure/SMTP/EmailGateway';
-import {SendOrderConfirmationEmailUseCase} from './Application/UseCases/SendOrderConfirmationEmailUseCase';
+import {SendOrderConfirmation} from './Application/Events/SendOrderConfirmation';
 
 class ShoppingApplication {
     private app: Application;
@@ -35,6 +35,8 @@ class ShoppingApplication {
 
         this.emailGateway = new EmailGateway();
 
+        const sendOrderConfirmation = new SendOrderConfirmation(this.emailGateway);
+
         this.shoppingCartProjection = new ShoppingCartProjectionSubscription(
             this.eventStoreGateway.client
         );
@@ -44,7 +46,7 @@ class ShoppingApplication {
 
         this.orderConfirmedSubscription = new OrderConfirmedSubscription(
             this.eventStoreGateway.client,
-            this.emailGateway
+            sendOrderConfirmation
         );
 
         this.projectionGateway = new KurrentDBProjectionGateway(
