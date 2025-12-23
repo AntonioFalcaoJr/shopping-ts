@@ -44,8 +44,8 @@ export interface OrderConfirmed {
     data: {
         orderId: string;
         confirmedAt: Date;
+        status: 'Confirmed';
     };
-    status: 'Confirmed';
 }
 
 export interface OrderShipped {
@@ -54,8 +54,8 @@ export interface OrderShipped {
         orderId: string;
         trackingNumber: string;
         shippedAt: Date;
+        status: 'Shipped';
     };
-    status: 'Shipped';
 }
 
 export interface OrderDelivered {
@@ -63,8 +63,8 @@ export interface OrderDelivered {
     data: {
         orderId: string;
         deliveredAt: Date;
+        status: 'Delivered';
     };
-    status: 'Delivered';
 }
 
 export interface OrderCancelled {
@@ -73,8 +73,8 @@ export interface OrderCancelled {
         orderId: string;
         reason: string;
         cancelledAt: Date;
+        status: 'Cancelled';
     };
-    status: 'Cancelled';
 }
 
 export const OrderEvents = {
@@ -112,8 +112,8 @@ export const OrderEvents = {
         data: {
             orderId: orderId.getValue(),
             confirmedAt,
+            status: 'Confirmed',
         },
-        status: 'Confirmed',
     }),
 
     OrderShipped: (orderId: OrderId, trackingNumber: string, shippedAt: Date): OrderShipped => ({
@@ -122,8 +122,8 @@ export const OrderEvents = {
             orderId: orderId.getValue(),
             trackingNumber,
             shippedAt,
+            status: 'Shipped',
         },
-        status: 'Shipped',
     }),
 
     OrderDelivered: (orderId: OrderId, deliveredAt: Date): OrderDelivered => ({
@@ -131,8 +131,8 @@ export const OrderEvents = {
         data: {
             orderId: orderId.getValue(),
             deliveredAt,
+            status: 'Delivered',
         },
-        status: 'Delivered',
     }),
 
     OrderCancelled: (orderId: OrderId, reason: string, cancelledAt: Date): OrderCancelled =>
@@ -142,7 +142,7 @@ export const OrderEvents = {
                 orderId: orderId.getValue(),
                 reason,
                 cancelledAt,
+                status: 'Cancelled',
             },
-            status: 'Cancelled',
         }),
 };
