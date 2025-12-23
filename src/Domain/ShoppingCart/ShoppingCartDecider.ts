@@ -38,7 +38,7 @@ export function evolve(
         case 'ShoppingStarted': {
             const evt = event as ShoppingStarted;
             return {
-                status: evt.status,
+                status: evt.data.status,
                 cartId: evt.data.cartId,
                 customerId: evt.data.customerId,
                 items: new Map(),
@@ -106,7 +106,7 @@ export function evolve(
             const evt = event as ShoppingCartCleared;
             return {
                 ...state,
-                status: evt.status,
+                status: evt.data.status,
                 items: new Map(),
             };
         }
@@ -136,6 +136,7 @@ export function decide(
 
         case 'AddItemToCart': {
             if (state.status !== 'Open') {
+                console.log(`[DEBUG_LOG] state.status is: ${state.status}`);
                 throw new Error('Shopping cart is not open');
             }
             return [
