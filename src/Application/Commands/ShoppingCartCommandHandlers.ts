@@ -1,39 +1,51 @@
-import {ShoppingCartCommand} from '../../Domain/ShoppingCart/ShoppingCartCommands';
-import {ShoppingCartDecider} from '../../Domain/ShoppingCart/ShoppingCartDecider';
-import {ShoppingCartEvent} from '../../Domain/ShoppingCart/ShoppingCartEvents';
+import { ShoppingCartCommand } from '../../Domain/ShoppingCart/ShoppingCartCommands';
+import { ShoppingCartDecider } from '../../Domain/ShoppingCart/ShoppingCartDecider';
+import { ShoppingCartEvent } from '../../Domain/ShoppingCart/ShoppingCartEvents';
+import {
+    AggregateStreamOptions,
+    AggregateStreamResultWithGlobalPosition,
+    AppendToStreamOptions,
+    AppendToStreamResultWithGlobalPosition,
+    Event,
+    ReadEventMetadataWithGlobalPosition,
+} from '@event-driven-io/emmett';
 
-export interface IEventStoreGateway {
-    loadEvents<T>(streamId: string): Promise<T[]>;
-
-    appendEvents<T>(streamId: string, events: T[]): Promise<void>;
-}
-
-export interface IEventBusGateway {
-    publish<T>(events: T[]): Promise<void>;
+export interface IEventStore {
+    aggregateStream<State, EventType extends Event, Metadata extends ReadEventMetadataWithGlobalPosition = ReadEventMetadataWithGlobalPosition>(
+        streamName: string,
+        options: AggregateStreamOptions<State, EventType, Metadata>
+    ): Promise<AggregateStreamResultWithGlobalPosition<State>>;
+    
+    appendToStream<EventType extends Event>(
+        streamName: string,
+        events: EventType[],
+        options?: AppendToStreamOptions
+    ): Promise<AppendToStreamResultWithGlobalPosition>;
 }
 
 export class ShoppingCartCommandHandler {
     constructor(
-        private readonly eventStore: IEventStoreGateway,
-        private readonly eventBus: IEventBusGateway
+        private readonly eventStore: IEventStore
     ) {
     }
 
     async handle(command: ShoppingCartCommand): Promise<void> {
         const streamId = this.getStreamId(command);
 
-        const events = await this.eventStore.loadEvents<ShoppingCartEvent>(streamId);
+        const result = await this.eventStore.aggregateStream<
+            typeof ShoppingCartDecider.initialState,
+            ShoppingCartEvent
+        >(streamId, {
+            evolve: ShoppingCartDecider.evolve,
+            initialState: () => ShoppingCartDecider.initialState,
+        });
 
-        let state = ShoppingCartDecider.initialState;
-        for (const event of events) {
-            state = ShoppingCartDecider.evolve(state, event);
-        }
+        const newEvents = ShoppingCartDecider.decide(command, result.state);
 
-        const newEvents = ShoppingCartDecider.decide(command, state);
-
-        await this.eventStore.appendEvents(streamId, newEvents);
-
-        await this.eventBus.publish(newEvents);
+        await this.eventStore.appendToStream(streamId, newEvents);
+        
+        // Events are automatically picked up by KurrentDB subscriptions
+        // No need for explicit event bus publishing
     }
 
     private getStreamId(command: ShoppingCartCommand): string {
@@ -42,8 +54,7 @@ export class ShoppingCartCommandHandler {
                 return `ShoppingCart-${command.data.cartId.getValue()}`;
             case 'AddItemToCart':
             case 'RemoveItemFromCart':
-            case 'IncreaseItemQuantity':
-            case 'DecreaseItemQuantity':
+            case 'ChangeItemQuantity':
             case 'ClearShoppingCart':
                 return `ShoppingCart-${command.data.cartId.getValue()}`;
             default:
@@ -82,21 +93,11 @@ export const removeItemFromCartHandler = async (
     await handler.handle(command);
 };
 
-export const increaseItemQuantityHandler = async (
+export const changeItemQuantityHandler = async (
     command: ShoppingCartCommand,
     handler: ShoppingCartCommandHandler
 ): Promise<void> => {
-    if (command.type !== 'IncreaseItemQuantity') {
-        throw new Error('Invalid command type');
-    }
-    await handler.handle(command);
-};
-
-export const decreaseItemQuantityHandler = async (
-    command: ShoppingCartCommand,
-    handler: ShoppingCartCommandHandler
-): Promise<void> => {
-    if (command.type !== 'DecreaseItemQuantity') {
+    if (command.type !== 'ChangeItemQuantity') {
         throw new Error('Invalid command type');
     }
     await handler.handle(command);
