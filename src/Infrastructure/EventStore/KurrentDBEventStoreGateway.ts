@@ -1,6 +1,6 @@
 import { KurrentDBClient } from '@kurrent/kurrentdb-client';
-import { getKurrentDBEventStore, KurrentDBEventStore } from '@event-driven-io/emmett-kurrentdb';
-import { IEventStore } from '../../Application/Commands/ShoppingCartCommandHandlers';
+import { getKurrentDBEventStore, KurrentDBEventStore } from '../EmmettKurrentDB';
+import { IEventStore } from '../../Application/Gateways/IEventStore';
 import {
     AggregateStreamOptions,
     AggregateStreamResultWithGlobalPosition,
