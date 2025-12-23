@@ -1,6 +1,6 @@
 import { KurrentDBClient } from '@kurrent/kurrentdb-client';
-import { kurrentDBSubscription, KurrentDBSubscription } from '@event-driven-io/emmett-kurrentdb';
-import { SendOrderConfirmationEmailUseCase } from '../../Application/UseCases/SendOrderConfirmationEmailUseCase';
+import { kurrentDBSubscription, KurrentDBSubscription } from '../EmmettKurrentDB';
+import { SendOrderConfirmation } from '../../Application/Events/SendOrderConfirmation';
 import { OrderConfirmed } from '../../Domain/Order/OrderEvents';
 
 export class OrderConfirmedSubscription {
@@ -8,7 +8,7 @@ export class OrderConfirmedSubscription {
 
     constructor(
         private readonly client: KurrentDBClient,
-        private readonly sendOrderConfirmationEmailUseCase: SendOrderConfirmationEmailUseCase
+        private readonly sendOrderConfirmation: SendOrderConfirmation
     ) {
         this.subscription = kurrentDBSubscription({
             client: this.client,
@@ -28,12 +28,12 @@ export class OrderConfirmedSubscription {
     }
 
     private async handleOrderConfirmed(event: OrderConfirmed): Promise<void> {
-        await this.sendOrderConfirmationEmailUseCase.execute(event);
+        await this.sendOrderConfirmation.execute(event);
     }
 
     async start(): Promise<void> {
         console.log('[OrderConfirmedSubscription] Starting subscription...');
-        await this.subscription.start({ startFrom: 'BEGINNING' });
+        this.subscription.start({ startFrom: 'BEGINNING' });
         console.log('[OrderConfirmedSubscription] Subscription started');
     }
 
