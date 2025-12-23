@@ -7,8 +7,7 @@ export type ShoppingCartCommand =
     | StartShopping
     | AddItemToCart
     | RemoveItemFromCart
-    | IncreaseItemQuantity
-    | DecreaseItemQuantity
+    | ChangeItemQuantity
     | ClearShoppingCart;
 
 export interface StartShopping {
@@ -37,21 +36,12 @@ export interface RemoveItemFromCart {
     };
 }
 
-export interface IncreaseItemQuantity {
-    type: 'IncreaseItemQuantity';
+export interface ChangeItemQuantity {
+    type: 'ChangeItemQuantity';
     data: {
         cartId: CartId;
         productId: ProductId;
-        quantity: Quantity;
-    };
-}
-
-export interface DecreaseItemQuantity {
-    type: 'DecreaseItemQuantity';
-    data: {
-        cartId: CartId;
-        productId: ProductId;
-        quantity: Quantity;
+        newQuantity: Quantity;
     };
 }
 
