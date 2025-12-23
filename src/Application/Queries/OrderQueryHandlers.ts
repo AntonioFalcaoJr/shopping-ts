@@ -26,6 +26,7 @@ export interface OrderReadModel {
     country: string;
   };
   trackingNumber?: string;
+  cancellationReason?: string;
   createdAt: Date;
   lastUpdated: Date;
 }
