@@ -1,30 +1,30 @@
-import {OrderCommand} from '../../Domain/Order/OrderCommands';
-import {OrderDecider} from '../../Domain/Order/OrderDecider';
-import {OrderEvent} from '../../Domain/Order/OrderEvents';
-import {IEventStoreGateway, IEventBusGateway} from './ShoppingCartCommandHandlers';
+import { OrderCommand } from '../../Domain/Order/OrderCommands';
+import { OrderDecider } from '../../Domain/Order/OrderDecider';
+import { OrderEvent } from '../../Domain/Order/OrderEvents';
+import { IEventStore } from './ShoppingCartCommandHandlers';
 
 export class OrderCommandHandler {
     constructor(
-        private readonly eventStore: IEventStoreGateway,
-        private readonly eventBus: IEventBusGateway
+        private readonly eventStore: IEventStore
     ) {
     }
 
     async handle(command: OrderCommand): Promise<void> {
         const streamId = this.getStreamId(command);
 
-        const events = await this.eventStore.loadEvents<OrderEvent>(streamId);
+        const result = await this.eventStore.aggregateStream<
+            typeof OrderDecider.initialState,
+            OrderEvent
+        >(streamId, {
+            evolve: OrderDecider.evolve,
+            initialState: () => OrderDecider.initialState,
+        });
 
-        let state = OrderDecider.initialState;
-        for (const event of events) {
-            state = OrderDecider.evolve(state, event);
-        }
+        const newEvents = OrderDecider.decide(command, result.state);
 
-        const newEvents = OrderDecider.decide(command, state);
-
-        await this.eventStore.appendEvents(streamId, newEvents);
-
-        await this.eventBus.publish(newEvents);
+        await this.eventStore.appendToStream(streamId, newEvents);
+        
+        // Events are automatically picked up by KurrentDB subscriptions
     }
 
     private getStreamId(command: OrderCommand): string {
